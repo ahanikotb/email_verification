@@ -57,7 +57,7 @@ func makeRoutes(r *gin.Engine) {
 			for i, _ := range options {
 				domain := parseDomain(req.Domain)
 				username := options[i]
-				fmt.Println(domain, username)
+// 				fmt.Println(domain, username)
 				ret, err := verifier.CheckSMTP(domain, username)
 				if err != nil {
 					// fmt.Println("check smtp failed: ", err)
