@@ -35,7 +35,7 @@ var (
 )
 
 func makeRoutes(r *gin.Engine) {
-	r.POST("/find_emails", func(c *gin.Context) {
+	r.GET("/find_emails", func(c *gin.Context) {
 
 		var requestBody EmailVerifierRequest
 		c.BindJSON(&requestBody)
