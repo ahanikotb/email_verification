@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"net/http"
 	"strings"
 
@@ -45,96 +46,40 @@ func parseDomain(d string) string {
 	return d
 }
 func makeRoutes(r *gin.Engine) {
-	// r.GET("/find_emails", func(c *gin.Context) {
-
-	// 	var requestBody EmailVerifierRequest
-	// 	c.BindJSON(&requestBody)
-
-	// 	var results []EmailResult
-	// 	for _, req := range requestBody.Requests {
-	// 		options := makeOptions(cleanFName(req.FirstName), cleanLName(req.LastName))
-	// 		for i, _ := range options {
-	// 			domain := parseDomain(req.Domain)
-	// 			username := options[i]
-	// 			fmt.Println(domain, username)
-	// 			ret, err := verifier.CheckSMTP(domain, username)
-	// 			if err != nil {
-	// 				// fmt.Println("check smtp failed: ", err)
-	// 				continue
-	// 			}
-
-	// 			if ret.Deliverable {
-	// 				results = append(results, EmailResult{
-	// 					FirstName: req.FirstName,
-	// 					LastName:  req.LastName,
-	// 					Domain:    domain,
-	// 					Result:    username + "@" + domain,
-	// 				})
-	// 			}
-
-	// 		}
-	// 	}
-
-	// 	c.JSON(http.StatusOK, results)
-
-	// })
 	r.GET("/find_emails", func(c *gin.Context) {
 
-		// Parse the request body
 		var requestBody EmailVerifierRequest
 		c.BindJSON(&requestBody)
 
-		// Create a buffered channel to store the requests
-		requestsChan := make(chan EmailFindRequest, len(requestBody.Requests))
-		for _, req := range requestBody.Requests {
-			requestsChan <- req
-		}
-		close(requestsChan)
-
-		// Create a channel to store the results
-		resultsChan := make(chan EmailResult, len(requestBody.Requests))
-
-		// Create 100 worker goroutines to process the requests
-		numWorkers := 100
-		for i := 0; i < numWorkers; i++ {
-			go func() {
-				for req := range requestsChan {
-					options := makeOptions(cleanFName(req.FirstName), cleanLName(req.LastName))
-					for i, _ := range options {
-						domain := parseDomain(req.Domain)
-						username := options[i]
-						ret, err := verifier.CheckSMTP(domain, username)
-						if err != nil {
-							continue
-						}
-
-						if ret.Deliverable {
-							resultsChan <- EmailResult{
-								FirstName: req.FirstName,
-								LastName:  req.LastName,
-								Domain:    domain,
-								Result:    username + "@" + domain,
-							}
-						}
-					}
-				}
-			}()
-		}
-
-		// Collect the results from the results channel
 		var results []EmailResult
-		for i := 0; i < len(requestBody.Requests); i++ {
-			result := <-resultsChan
-			results = append(results, result)
+		for _, req := range requestBody.Requests {
+			options := makeOptions(cleanFName(req.FirstName), cleanLName(req.LastName))
+			for i, _ := range options {
+				domain := parseDomain(req.Domain)
+				username := options[i]
+				fmt.Println(domain, username)
+				ret, err := verifier.CheckSMTP(domain, username)
+				if err != nil {
+					// fmt.Println("check smtp failed: ", err)
+					continue
+				}
+
+				if ret.Deliverable {
+					results = append(results, EmailResult{
+						FirstName: req.FirstName,
+						LastName:  req.LastName,
+						Domain:    domain,
+						Result:    username + "@" + domain,
+					})
+				}
+
+			}
 		}
 
-		// Close the results channel
-		close(resultsChan)
-
-		// Return the results in the response
 		c.JSON(http.StatusOK, results)
 
 	})
+
 }
 
 func main() {
