@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"net/http"
-	"net/url"
 	"strings"
 
 	emailverifier "github.com/AfterShip/email-verifier"
@@ -36,32 +35,16 @@ var (
 		EnableSMTPCheck()
 )
 
-func cleanName(s string) string {
+func cleanFName(s string) string {
 	return strings.ToLower(strings.TrimSpace(s))
 }
-
-func parseDomain(d string) string {
-	domain := d
-	u, err := url.Parse("http://" + domain)
-	if err != nil {
-		panic(err)
-	}
-
-	host := u.Hostname()
-	dot := len(host) - 1
-	for i := len(host) - 1; i >= 0; i-- {
-		if host[i] == '.' {
-			dot = i
-			break
-		}
-	}
-
-	name := host[:dot]
-	tld := host[dot+1:]
-	return name + "." + tld
-
+func cleanLName(s string) string {
+	return strings.ReplaceAll(strings.ToLower(strings.TrimSpace(s)), " ", "")
 }
-
+func parseDomain(d string) string {
+	d = strings.Split(strings.Replace(strings.Replace(strings.Replace(d, "https://", "", -1), "http://", "", -1), "www.", "", -1), "/")[0]
+	return d
+}
 func makeRoutes(r *gin.Engine) {
 	r.GET("/find_emails", func(c *gin.Context) {
 
@@ -70,11 +53,11 @@ func makeRoutes(r *gin.Engine) {
 
 		var results []EmailResult
 		for _, req := range requestBody.Requests {
-			options := makeOptions(cleanName(req.FirstName), cleanName(req.LastName))
+			options := makeOptions(cleanFName(req.FirstName), cleanLName(req.LastName))
 			for i, _ := range options {
-
 				domain := parseDomain(req.Domain)
 				username := options[i]
+				fmt.Println(domain, username)
 				ret, err := verifier.CheckSMTP(domain, username)
 				if err != nil {
 					fmt.Println("check smtp failed: ", err)
