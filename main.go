@@ -40,7 +40,7 @@ func makeRoutes(r *gin.Engine) {
 		var requestBody EmailVerifierRequest
 		c.BindJSON(&requestBody)
 
-		var results FoundResults
+		var results []EmailResult
 		for _, req := range requestBody.Requests {
 			options := makeOptions(req.FirstName, req.LastName, req.Domain)
 			for i, _ := range options {
@@ -50,14 +50,19 @@ func makeRoutes(r *gin.Engine) {
 				ret, err := verifier.CheckSMTP(domain, username)
 				if err != nil {
 					fmt.Println("check smtp failed: ", err)
-					return
+					continue
 				}
 
-				fmt.Println("smtp validation result: ", ret)
+				if ret.Deliverable {
+					results = append(results, EmailResult{
+						FirstName: req.FirstName,
+						LastName:  req.LastName,
+						Domain:    domain,
+						Result:    username + "@" + domain,
+					})
+				}
 
 			}
-
-			// results = append(results, options...)
 		}
 
 		c.JSON(http.StatusOK, results)
