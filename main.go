@@ -103,3 +103,14 @@ func makeOptions(f_name string, l_name string) []string {
 	}
 	return options
 }
+
+
+
+//to send a request
+// {"Requests": [
+
+//     {
+//     "FirstName":"John",
+//     "LastName":"smith",
+//     "Domain":"apple.com"}
+// ]}
