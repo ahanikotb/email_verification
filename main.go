@@ -16,6 +16,7 @@ type EmailResult struct {
 	FirstName string
 	LastName  string
 	Domain    string
+	Status    string
 	Result    string
 }
 type EmailVerifierRequest struct {
@@ -45,6 +46,8 @@ func parseDomain(d string) string {
 	return d
 }
 func makeRoutes(r *gin.Engine) {
+	// r.GET("/verify_emails", func(ctx *gin.Context) {})
+	// r.GET("/verify_email", func(ctx *gin.Context) {})
 	r.GET("/find_emails", func(c *gin.Context) {
 
 		var requestBody EmailVerifierRequest
@@ -53,13 +56,11 @@ func makeRoutes(r *gin.Engine) {
 		var results []EmailResult
 		for _, req := range requestBody.Requests {
 			options := makeOptions(cleanFName(req.FirstName), cleanLName(req.LastName))
-			for i, _ := range options {
+			for i := range options {
 				domain := parseDomain(req.Domain)
 				username := options[i]
-// 				fmt.Println(domain, username)
 				ret, err := verifier.CheckSMTP(domain, username)
 				if err != nil {
-					// fmt.Println("check smtp failed: ", err)
 					continue
 				}
 
@@ -69,6 +70,7 @@ func makeRoutes(r *gin.Engine) {
 						LastName:  req.LastName,
 						Domain:    domain,
 						Result:    username + "@" + domain,
+						Status:    "ok",
 					})
 				}
 
@@ -89,22 +91,21 @@ func main() {
 
 func makeOptions(f_name string, l_name string) []string {
 	options := []string{
-		string(f_name[0]) + l_name,       //+ "@" + domain,
-		string(f_name[0]) + "_" + l_name, //+ "@" + domain,
-
-		string(f_name[0]) + "." + l_name, //+ "@" + domain,
-		f_name + "." + l_name,            // + "@" + domain,
-		f_name + "." + string(l_name[0]), //+ "@" + domain,
-		f_name + "_" + string(l_name[0]), // + "@" + domain,
+		string(f_name[0]) + l_name,
+		string(f_name[0]) + "_" + l_name,
+		string(f_name[0]) + "." + l_name,
+		f_name + "." + l_name,
+		f_name + "." + string(l_name[0]),
+		f_name + "_" + string(l_name[0]),
 		f_name + l_name,
-		f_name + "_" + l_name, // + "@" + domain,
-		f_name,                // + "@" + domain,
-		l_name,                // + "@" + domain,
+		f_name + "_" + l_name,
+		f_name,
+		l_name,
 	}
 	return options
 }
 
-//to send a request
+//to send a request send this json body to xxxxx/find_email
 // {"Requests": [
 
 //     {
